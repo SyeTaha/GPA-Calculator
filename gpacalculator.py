@@ -1,3 +1,4 @@
+import pandas as pd
 import os
 
 class Course:
@@ -14,8 +15,21 @@ def calculate_total_grade_points(course_list):
 
 def read_course_data(course):
     course.name = input("Enter course name: ")
-    course.score = float(input("Enter course score: "))
-    course.credit_hours = int(input("Enter credit hours: "))
+
+    while True:
+        try:
+            course.score = float(input("Enter Grade Points: "))
+            break
+        except ValueError:
+            print("Invalid input. Please enter a valid number for the score.")
+
+    while True:
+        try:
+            course.credit_hours = int(input("Enter credit hours: "))
+            break
+        except ValueError:
+            print("Invalid input. Please enter a valid integer for credit hours.")
+
 
 def calculate_gpa(total_grade_points, total_credit_hours):
     return total_grade_points / total_credit_hours if total_credit_hours != 0 else 0
@@ -33,6 +47,7 @@ def add_course(course_list):
     new_course = Course()
     read_course_data(new_course)
 
+    # Check for duplicate course name
     if find_course_by_name(course_list, new_course.name):
         print(f"Course with name '{new_course.name}' already exists. Skipping addition.")
     else:
@@ -72,25 +87,23 @@ def list_all_courses(course_list):
     for course in course_list:
         display_course_data(course)
 
-def save_to_file(course_list):
-    with open("user_data.txt", "w") as file:
-        for course in course_list:
-            file.write(f"{course.name}\n{course.score}\n{course.credit_hours}\n")
+def save_to_excel(course_list):
+    data = {'Name': [course.name for course in course_list],
+            'Score': [course.score for course in course_list],
+            'Credit Hours': [course.credit_hours for course in course_list]}
 
-def load_from_file(course_list):
-    if os.path.exists("user_data.txt"):
-        with open("user_data.txt", "r") as file:
-            while True:
-                name = file.readline().strip()
-                if not name:
-                    break
-                score = float(file.readline().strip())
-                credit_hours = int(file.readline().strip())
-                course_list.append(Course(name, score, credit_hours))
+    df = pd.DataFrame(data)
+    df.to_excel("user_data.xlsx", index=False)
+
+def load_from_excel(course_list):
+    if os.path.exists("user_data.xlsx"):
+        df = pd.read_excel("user_data.xlsx")
+        for index, row in df.iterrows():
+            course_list.append(Course(row['Name'], row['Score'], row['Credit Hours']))
 
 def main():
     course_list = []
-    load_from_file(course_list)
+    load_from_excel(course_list)
 
     while True:
         print("\nOptions:")
@@ -117,7 +130,7 @@ def main():
         elif option == "5":
             list_all_courses(course_list)
         elif option == "6":
-            save_to_file(course_list)
+            save_to_excel(course_list)
             print("Program ended.")
             break
         else:
